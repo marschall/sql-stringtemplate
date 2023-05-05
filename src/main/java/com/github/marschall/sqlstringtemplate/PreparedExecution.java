@@ -1,4 +1,4 @@
-package om.github.marschall.sqlstringtemplate;
+package com.github.marschall.sqlstringtemplate;
 
 import java.math.BigDecimal;
 import java.net.URL;

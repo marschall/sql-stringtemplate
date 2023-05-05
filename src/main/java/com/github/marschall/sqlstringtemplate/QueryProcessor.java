@@ -1,4 +1,4 @@
-package om.github.marschall.sqlstringtemplate;
+package com.github.marschall.sqlstringtemplate;
 
 import java.lang.StringTemplate;
 import java.net.URL;
