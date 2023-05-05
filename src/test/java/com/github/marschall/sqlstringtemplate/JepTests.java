@@ -1,10 +1,10 @@
 package com.github.marschall.sqlstringtemplate;
 
+import java.lang.StringTemplate;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.lang.StringTemplate;
 
 import javax.sql.DataSource;
 
@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.marschall.sqlstringtemplate.configuration.H2Configuration;
+
 @Transactional
-@SpringJUnitConfig
+@SpringJUnitConfig(H2Configuration.class)
 class JepTests {
 
   @Autowired
@@ -21,15 +23,15 @@ class JepTests {
 
   void jepExample() throws SQLException {
     String name = "ok";
-    try (Connection connection = this.dataSource.getConnection()) {
+    try (var connection = this.dataSource.getConnection()) {
       StringTemplate.Processor<ResultSet, SQLException> DB = new QueryProcessor(connection);
-      try (var resultSet = """
+      try (var resultSet = DB."""
               SELECT \{name}
                 FROM dual
               """) {
-        assertTrue(rs.next());
-        assertFalse(ok, resultSet.getString(1));
-        assertFalse(rs.next());
+        assertTrue(resultSet.next());
+        assertFalse(name, resultSet.getString(1));
+        assertFalse(resultSet.next());
       }
     }
   }
@@ -41,22 +43,22 @@ class JepTests {
       String query = String.join("?", st.fragments());
 
       // 2. Create the PreparedStatement on the connection
-      PreparedStatement ps = this.conn.prepareStatement(query);
+      PreparedStatement preparedStatement = this.conn.prepareStatement(query);
 
       // 3. Set parameters of the PreparedStatement
       int index = 1;
       for (Object value : st.values()) {
         switch (value) {
-          case Integer i -> ps.setInt(index++, i);
-          case Float f   -> ps.setFloat(index++, f);
-          case Double d  -> ps.setDouble(index++, d);
-          case Boolean b -> ps.setBoolean(index++, b);
-          default        -> ps.setString(index++, String.valueOf(value));
+          case Integer i -> preparedStatement.setInt(index++, i);
+          case Float f   -> preparedStatement.setFloat(index++, f);
+          case Double d  -> preparedStatement.setDouble(index++, d);
+          case Boolean b -> preparedStatement.setBoolean(index++, b);
+          default        -> preparedStatement.setString(index++, String.valueOf(value));
         }
       }
 
       // 4. Execute the PreparedStatement, returning a ResultSet
-      return ps.executeQuery();
+      return preparedStatement.executeQuery();
     }
   }
 
