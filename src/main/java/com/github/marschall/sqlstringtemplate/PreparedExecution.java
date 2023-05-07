@@ -4,16 +4,19 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
+import java.sql.Array;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.Date;
 import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.Ref;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLXML;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -31,6 +34,20 @@ public final class PreparedExecution {
     this.dataSource = dataSource;
     this.query = query;
     this.parameters = parameters;
+  }
+  
+  <T> List<T> query(RowMapper<T> rowMapper) throws SQLException {
+    List<T> result = new ArrayList<>();
+    try (var connection = this.dataSource.getConnection();
+         var preparedStatement = connection.prepareStatement(this.query)) {
+         this.setParameters(preparedStatement);
+         try (ResultSet resultSet = preparedStatement.executeQuery()) {
+           while (resultSet.next()) {
+             result.add(rowMapper.mapRow(resultSet));
+           }
+         }
+       }
+    return result;
   }
 
   int update() throws SQLException {
@@ -64,7 +81,8 @@ public final class PreparedExecution {
         case byte[] b      -> preparedStatement.setBytes(index++, b);
 
         case Blob b        -> preparedStatement.setBlob(index++, b);
-        case NClob nc       -> preparedStatement.setNClob(index++, nc);
+        case Array a       -> preparedStatement.setArray(index++, a);
+        case NClob nc      -> preparedStatement.setNClob(index++, nc);
         case Clob c        -> preparedStatement.setClob(index++, c);
         case SQLXML s      -> preparedStatement.setSQLXML(index++, s);
 

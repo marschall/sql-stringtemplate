@@ -23,6 +23,7 @@ public class H2Configuration {
     return new EmbeddedDatabaseBuilder()
             .generateUniqueName(true)
             .setType(H2)
+            .addScript("classpath:sql/sakila.sql")
             .setScriptEncoding("UTF-8")
             .ignoreFailedDrops(true)
             .build();
