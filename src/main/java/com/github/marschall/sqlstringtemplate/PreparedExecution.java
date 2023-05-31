@@ -35,7 +35,7 @@ public final class PreparedExecution {
     this.query = query;
     this.parameters = parameters;
   }
-  
+
   <T> List<T> query(RowMapper<T> rowMapper) throws SQLException {
     List<T> result = new ArrayList<>();
     try (var connection = this.dataSource.getConnection();

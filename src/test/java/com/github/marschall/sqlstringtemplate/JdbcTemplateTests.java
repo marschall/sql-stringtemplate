@@ -1,8 +1,9 @@
 package com.github.marschall.sqlstringtemplate;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import javax.sql.DataSource;
 
@@ -15,8 +16,10 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.RowMapper;
 
 import com.github.marschall.sqlstringtemplate.configuration.H2Configuration;
+import org.springframework.dao.DataAccessException;
 
 @Transactional
 @SpringJUnitConfig(H2Configuration.class)
@@ -36,16 +39,16 @@ class JdbcTemplateTests {
   void query() {
     String name = "ok";
     var SQL = new PreparedStatementCreatorTemplateProcessor();
-    List<Strin> names = this.jdbcTemplate.query(SQL."""
+    List<String> names = this.jdbcTemplate.query(SQL."""
             SELECT \{name}
             FROM dual
-          """, (RowMapper) (rs, i) -> rs.getString(1));
+          """, (rs, i) -> rs.getString(1));
     assertEquals(List.of(name), names);
   }
 
-  static final class PreparedStatementCreatorTemplateProcessor implements StringTemplate.Processor<PreparedStatementCreator, SQLException> {
+  static final class PreparedStatementCreatorTemplateProcessor implements StringTemplate.Processor<PreparedStatementCreator, DataAccessException> {
 
-    public PreparedStatementCreator process(StringTemplate st) throws SQLException {
+    public PreparedStatementCreator process(StringTemplate st) {
       String sql = String.join("?", st.fragments());
       return new PreparedStatementCreatorFactory(sql).newPreparedStatementCreator(st.values());
     }

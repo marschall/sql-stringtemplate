@@ -27,8 +27,15 @@ class QueryProcessorTests {
   }
 
   @Test
-  void test() {
-    fail("Not yet implemented");
+  void simpleQuery() {
+
+    String name = "ok";
+    var SQL = new PreparedStatementCreatorTemplateProcessor();
+    List<String> names = this.jdbcTemplate.query(queryProcessor."""
+            SELECT \{name}
+            FROM dual
+          """.query((rs, i) -> rs.getString(1)));
+    assertEquals(List.of(name), names);
   }
 
 }
