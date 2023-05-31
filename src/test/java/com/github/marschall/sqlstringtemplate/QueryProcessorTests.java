@@ -1,8 +1,11 @@
 package com.github.marschall.sqlstringtemplate;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.sql.DataSource;
+
+import java.sql.SQLException;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,22 +22,21 @@ class QueryProcessorTests {
   @Autowired
   private DataSource dataSource;
 
-  private QueryProcessor queryProcessor;
+  private QueryProcessor database;
 
   @BeforeEach
   void setUp() {
-    this.queryProcessor = new QueryProcessor(this.dataSource);
+    this.database = new QueryProcessor(this.dataSource);
   }
 
   @Test
-  void simpleQuery() {
+  void simpleQuery() throws SQLException {
 
     String name = "ok";
-    var SQL = new PreparedStatementCreatorTemplateProcessor();
-    List<String> names = this.jdbcTemplate.query(queryProcessor."""
+    List<String> names = this.database."""
             SELECT \{name}
             FROM dual
-          """.query((rs, i) -> rs.getString(1)));
+          """.query(RowMapper.string());
     assertEquals(List.of(name), names);
   }
 
