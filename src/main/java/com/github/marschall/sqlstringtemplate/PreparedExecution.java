@@ -23,7 +23,6 @@ import javax.sql.DataSource;
 
 public final class PreparedExecution {
 
-
   private final DataSource dataSource;
 
   private final String query;

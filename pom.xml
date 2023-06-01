@@ -162,6 +162,9 @@
             <link>https://download.java.net/java/early_access/jdk21/docs/api/</link>
           </links>
           <release>21</release>
+          <additionalOptions>
+            <additionalOption>--enable-preview</additionalOption>
+          </additionalOptions>
         </configuration>
         <executions>
           <execution>

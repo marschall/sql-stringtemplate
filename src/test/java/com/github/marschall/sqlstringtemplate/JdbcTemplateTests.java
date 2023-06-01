@@ -17,6 +17,8 @@ import org.springframework.jdbc.core.PreparedStatementCreatorFactory;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.SqlParameter;
+import org.springframework.jdbc.support.JdbcUtils;
 
 import com.github.marschall.sqlstringtemplate.configuration.H2Configuration;
 import org.springframework.dao.DataAccessException;
@@ -50,7 +52,12 @@ class JdbcTemplateTests {
 
     public PreparedStatementCreator process(StringTemplate st) {
       String sql = String.join("?", st.fragments());
-      return new PreparedStatementCreatorFactory(sql).newPreparedStatementCreator(st.values());
+      PreparedStatementCreatorFactory factory = new PreparedStatementCreatorFactory(sql);
+      List<Object> parameters = st.values();
+      for (Object parameter : parameters) {
+        factory.addParameter(new SqlParameter(JdbcUtils.TYPE_UNKNOWN));
+      }
+      return factory.newPreparedStatementCreator(parameters);
     }
   }
 
