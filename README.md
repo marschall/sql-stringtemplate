@@ -3,9 +3,9 @@
 Why
 ---
 
-People may copy and paste the sample code from the JEP. The sample code of the JEP has the folloing issues:
+People may copy and paste the sample code from the JEP. The sample code of the JEP has the following issues:
 
-- It requires operating on a `Connection`. In general `DataSource` offers easier framework integartion and does not require a try-with-resources block.
+- It requires operating on a `Connection`. In general `DataSource` offers easier framework integration and does not require a try-with-resources block.
 - The `PreparedStatement` is never closed. In theory the connection pool should track all open objects and close the `ResultSet`. However not all connection pools do this directly.
 - It puts the burden on the caller to close the `ResultSet`.
 - It binds only a limited number of objects, relying on the string representation for others rather than relying on the driver.
@@ -23,3 +23,7 @@ try (var connection = this.dataSource.getConnection()) {
 }
 ```
 
+Limitations
+-----------
+
+- SQL strings are not cached resulting in a lot of unnecessary allocations. SQL strings can get quite large quite quickly.

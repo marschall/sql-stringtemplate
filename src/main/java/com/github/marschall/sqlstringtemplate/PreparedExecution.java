@@ -18,6 +18,8 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import javax.sql.DataSource;
 
@@ -35,34 +37,73 @@ public final class PreparedExecution {
     this.parameters = parameters;
   }
 
-  <T> List<T> query(RowMapper<T> rowMapper) throws SQLException {
-    List<T> result = new ArrayList<>();
-    try (var connection = this.dataSource.getConnection();
-         var preparedStatement = connection.prepareStatement(this.query)) {
-         this.setParameters(preparedStatement);
-         try (ResultSet resultSet = preparedStatement.executeQuery()) {
-           while (resultSet.next()) {
-             result.add(rowMapper.mapRow(resultSet));
-           }
-         }
-       }
-    return result;
+  public <T> List<T> queryForList(RowMapper<T> rowMapper) throws SQLException {
+    return doWithPreparedStatement(preparedStatement -> {
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        List<T> result = new ArrayList<>();
+        while (resultSet.next()) {
+          result.add(rowMapper.mapRow(resultSet));
+        }
+        return result;
+      }
+    });
   }
 
-  int update() throws SQLException {
-    try (var connection = this.dataSource.getConnection();
-         var preparedStatement = connection.prepareStatement(this.query)) {
-      this.setParameters(preparedStatement);
-      return preparedStatement.executeUpdate();
-    }
+  public <T> Optional<T> queryForOptional(RowMapper<T> rowMapper) throws SQLException {
+    return doWithPreparedStatement(preparedStatement -> {
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        if (resultSet.next()) {
+          // here a null check could also be avoided
+          Optional<T> result = Optional.ofNullable(rowMapper.mapRow(resultSet));
+          if (resultSet.next()) {
+            throw new IllegalStateException("more than one object returned");
+          }
+          return result;
+        } else {
+          return Optional.empty();
+        }
+      }
+    });
   }
 
-  long laregeUpdate() throws SQLException {
+  public <T> T queryForObject(RowMapper<T> rowMapper) throws SQLException {
+    return doWithPreparedStatement(preparedStatement -> {
+      try (ResultSet resultSet = preparedStatement.executeQuery()) {
+        if (resultSet.next()) {
+          // here a null check could also be avoided
+          T result = rowMapper.mapRow(resultSet);
+          if (resultSet.next()) {
+            throw new IllegalStateException("more than one object returned");
+          }
+          return result;
+        } else {
+          throw new NoSuchElementException("no row returned");
+        }
+      }
+    });
+  }
+
+  public int update() throws SQLException {
+    return doWithPreparedStatement(PreparedStatement::executeUpdate);
+  }
+
+  public long laregeUpdate() throws SQLException {
+    return doWithPreparedStatement(PreparedStatement::executeLargeUpdate);
+  }
+
+  private <T> T doWithPreparedStatement(PreparedStatementCallback<T> callback) throws SQLException {
     try (var connection = this.dataSource.getConnection();
          var preparedStatement = connection.prepareStatement(this.query)) {
-      this.setParameters(preparedStatement);
-      return preparedStatement.executeLargeUpdate();
-    }
+     this.setParameters(preparedStatement);
+     return callback.doWithPreparedStatement(preparedStatement);
+   }
+  }
+
+  @FunctionalInterface
+  interface PreparedStatementCallback<T> {
+
+    T doWithPreparedStatement(PreparedStatement preparedStatement) throws SQLException;
+
   }
 
   private void setParameters(PreparedStatement preparedStatement) throws SQLException {
@@ -71,9 +112,9 @@ public final class PreparedExecution {
       switch (parameter) {
         case Ref r         -> preparedStatement.setRef(index++, r);
 
-        case Date d            -> preparedStatement.setDate(index++, d);
-        case Time t            -> preparedStatement.setTime(index++, t);
-        case Timestamp ts      -> preparedStatement.setTimestamp(index++, ts);
+        case Date d        -> preparedStatement.setDate(index++, d);
+        case Time t        -> preparedStatement.setTime(index++, t);
+        case Timestamp ts  -> preparedStatement.setTimestamp(index++, ts);
 
         case InputStream b -> preparedStatement.setBinaryStream(index++, b);
         case Reader r      -> preparedStatement.setCharacterStream(index++, r);

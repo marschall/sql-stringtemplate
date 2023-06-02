@@ -19,6 +19,6 @@ public final class QueryProcessor implements StringTemplate.Processor<PreparedEx
 
     // delay the execution because we have to close the connection
     return new PreparedExecution(this.dataSource, query, st.values());
-}
+  }
 
 }

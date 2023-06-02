@@ -1,6 +1,7 @@
 package com.github.marschall.sqlstringtemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static com.github.marschall.sqlstringtemplate.RowMapper.ofString;
 
 import javax.sql.DataSource;
 
@@ -36,7 +37,7 @@ class QueryProcessorTests {
     List<String> names = this.database."""
             SELECT \{name}
             FROM dual
-          """.query(RowMapper.string());
+          """.queryForList(ofString());
     assertEquals(List.of(name), names);
   }
 
